@@ -1,0 +1,1052 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="description" content="슬랙 같은 메신저에서 가상의 동료들과 대화하며 IT 실무 영어를 연습해요.">
+<title>Pingback</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;500;600;700;800&family=IBM+Plex+Sans+KR:wght@400;500;600;700&display=swap">
+<style>
+/* Layout: workspace rail + channel sidebar + conversation + mission panel, messenger-style */
+:root{
+  --rail:#0E2724; --side:#163B36; --side-fg:#C9DDD8; --side-muted:#8DB0A8; --side-active:#2E6E62; --side-hover:#1E4A44;
+  --bg:#FAFBF9; --fg:#1B2422; --muted:#66736F; --line:#E2E7E4; --hover:#F1F4F2; --panel:#F4F7F5;
+  --accent:#1D7A69; --accent-soft:#E1F1ED; --badge:#E2603F;
+  --mention-bg:#FFF1CF; --mention-fg:#7A5200;
+  --card:#FFFFFF; --shadow:0 6px 24px rgba(16,40,36,.12);
+  --font-ui:"Figtree","IBM Plex Sans KR",system-ui,-apple-system,"Apple SD Gothic Neo",sans-serif;
+  --font-ko:"IBM Plex Sans KR","Figtree",system-ui,"Apple SD Gothic Neo",sans-serif;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --rail:#081614; --side:#0F221F; --side-fg:#C2D6D1; --side-muted:#7E9C95; --side-active:#23584E; --side-hover:#173230;
+  --bg:#151B1A; --fg:#E4EBE9; --muted:#95A39F; --line:#29332F; --hover:#1C2422; --panel:#111716;
+  --accent:#5BC4AE; --accent-soft:#1C3531; --badge:#EE7555;
+  --mention-bg:#3A3015; --mention-fg:#F3C767; --card:#1C2422; --shadow:0 6px 24px rgba(0,0,0,.4); color-scheme:dark}}
+:root[data-theme="dark"]{
+  --rail:#081614; --side:#0F221F; --side-fg:#C2D6D1; --side-muted:#7E9C95; --side-active:#23584E; --side-hover:#173230;
+  --bg:#151B1A; --fg:#E4EBE9; --muted:#95A39F; --line:#29332F; --hover:#1C2422; --panel:#111716;
+  --accent:#5BC4AE; --accent-soft:#1C3531; --badge:#EE7555;
+  --mention-bg:#3A3015; --mention-fg:#F3C767; --card:#1C2422; --shadow:0 6px 24px rgba(0,0,0,.4); color-scheme:dark}
+
+[hidden]{display:none!important}
+html,body{height:100%}
+body{background:var(--bg);color:var(--fg);font-family:var(--font-ui);font-size:15px;overflow:hidden}
+button{font:inherit;color:inherit;cursor:pointer;background:none;border:0}
+button:focus-visible,textarea:focus-visible,input:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.app{display:grid;grid-template-columns:64px 250px minmax(0,1fr) 300px;height:100%}
+
+/* rail */
+.rail{background:var(--rail);display:flex;flex-direction:column;align-items:center;gap:14px;padding-block:14px}
+.ws-logo{width:38px;height:38px;border-radius:10px;background:#F2B544;color:#1B2422;display:grid;place-items:center;font-weight:800;font-size:15px;box-shadow:0 0 0 2px var(--rail),0 0 0 4px #F2B54466}
+.rail-btn{width:56px;white-space:nowrap;display:flex;flex-direction:column;align-items:center;gap:3px;color:var(--side-muted);font-size:11px;font-family:var(--font-ko)}
+.rail-btn .ic{width:34px;height:34px;border-radius:9px;display:grid;place-items:center}
+.rail-btn.on .ic{background:var(--side-active);color:#fff}
+.rail-btn.on{color:#fff}
+.rail svg{width:18px;height:18px}
+
+/* sidebar */
+.side{background:var(--side);color:var(--side-fg);display:flex;flex-direction:column;min-width:0}
+.side-head{padding:16px 16px 12px;border-bottom:1px solid #ffffff14}
+.ws-name{font-weight:800;font-size:17px;color:#fff;display:flex;align-items:center;gap:6px}
+.ws-sub{font-size:12px;color:var(--side-muted);margin-top:2px;font-family:var(--font-ko)}
+.side-scroll{overflow:auto;padding:10px 8px 20px;flex:1}
+.sec-label{font-size:12px;letter-spacing:.04em;color:var(--side-muted);padding:14px 10px 6px;font-weight:600;font-family:var(--font-ko)}
+.nav-item{width:100%;display:flex;align-items:center;gap:8px;padding:5px 10px;border-radius:7px;text-align:left;color:var(--side-fg);font-size:15px}
+.nav-item:hover{background:var(--side-hover)}
+.nav-item.on{background:var(--side-active);color:#fff}
+.nav-item.unread{color:#fff;font-weight:700}
+.nav-item .hash{width:18px;text-align:center;opacity:.75}
+.nav-item .nm{flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.badge{background:var(--badge);color:#fff;font-size:11px;font-weight:700;min-width:18px;height:18px;border-radius:9px;display:grid;place-items:center;padding:0 5px}
+.mini-av{width:20px;height:20px;border-radius:5px;display:grid;place-items:center;font-size:10px;font-weight:700;color:#fff;position:relative}
+.mini-av::after{content:"";position:absolute;right:-3px;bottom:-3px;width:8px;height:8px;border-radius:50%;background:#3CC48A;border:2px solid var(--side)}
+.side-foot{padding:12px 14px;border-top:1px solid #ffffff14;display:flex;align-items:center;gap:10px;font-size:13px}
+.side-foot .me{width:30px;height:30px;border-radius:8px;background:#F2B544;color:#1B2422;display:grid;place-items:center;font-weight:800}
+.side-foot b{color:#fff;display:block}
+.side-foot span{color:var(--side-muted);font-family:var(--font-ko);font-size:12px}
+
+/* main */
+.main{display:flex;flex-direction:column;min-width:0;background:var(--bg);height:100%}
+.topbar{display:flex;align-items:center;gap:10px;padding:0 18px;height:56px;border-bottom:1px solid var(--line);flex-shrink:0}
+.topbar h1{font-size:18px;font-weight:800;margin:0;display:flex;align-items:center;gap:6px;min-width:0}
+.topbar h1 .t{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.topic{color:var(--muted);font-size:13px;font-family:var(--font-ko);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0;flex:1}
+.tb-btn{border:1px solid var(--line);border-radius:8px;padding:6px 10px;font-size:13px;font-family:var(--font-ko);color:var(--fg);white-space:nowrap;display:flex;align-items:center;gap:6px}
+.tb-btn:hover{background:var(--hover)}
+.tb-btn[aria-pressed="true"]{background:var(--accent-soft);border-color:var(--accent);color:var(--accent)}
+.only-narrow{display:none}
+.msgs{flex:1;overflow:auto;padding:12px 0 8px}
+.intro{padding:22px 22px 10px}
+.intro h2{margin:0 0 6px;font-size:22px;font-weight:800}
+.intro p{margin:0;color:var(--muted);font-family:var(--font-ko);font-size:14px}
+.day{display:flex;align-items:center;gap:10px;margin:14px 0 6px;padding:0 22px;color:var(--muted);font-size:12px;font-weight:600}
+.day::before,.day::after{content:"";flex:1;height:1px;background:var(--line)}
+.day span{border:1px solid var(--line);border-radius:20px;padding:3px 12px;font-family:var(--font-ko)}
+
+.msg{position:relative;display:grid;grid-template-columns:40px minmax(0,1fr);gap:10px;padding:7px 22px}
+.msg:hover,.msg.active{background:var(--hover)}
+.msg.cont{padding-top:1px}
+.msg.cont .av{visibility:hidden;height:0}
+.av{width:40px;height:40px;border-radius:9px;display:grid;place-items:center;color:#fff;font-weight:800;font-size:15px}
+.who{display:flex;align-items:baseline;gap:8px;flex-wrap:wrap}
+.who b{font-weight:800}
+.who .role{font-size:12px;color:var(--muted);font-family:var(--font-ko)}
+.who time{font-size:12px;color:var(--muted);font-variant-numeric:tabular-nums}
+.text{line-height:1.5;word-wrap:break-word;white-space:pre-wrap;transition:filter .2s}
+.text.veiled{filter:blur(6px);user-select:none;cursor:pointer}
+.mention{background:var(--mention-bg);color:var(--mention-fg);border-radius:4px;padding:0 3px;font-weight:600}
+.me-mention{background:var(--mention-bg)}
+.msg.mentions-me{box-shadow:inset 3px 0 0 #E7A92B}
+.ko{margin-top:6px;font-family:var(--font-ko);font-size:14px;color:var(--muted);border-left:2px solid var(--accent);padding:2px 0 2px 10px;line-height:1.55}
+.ko .kx{display:block;margin-top:4px;font-size:13px}
+.ko .kx em{font-style:normal;color:var(--accent);font-weight:600}
+.reacts{display:flex;gap:6px;margin-top:6px;flex-wrap:wrap}
+.react{border:1px solid var(--line);background:var(--card);border-radius:12px;padding:1px 8px;font-size:13px;display:flex;align-items:center;gap:4px;font-variant-numeric:tabular-nums}
+.react.mine{border-color:var(--accent);background:var(--accent-soft)}
+.attach{margin-top:8px;border:1px solid var(--line);border-radius:10px;background:var(--card);max-width:360px;overflow:hidden}
+.attach .prev{height:150px;background:linear-gradient(135deg,#EAF3F0,#F8EEDF);position:relative;padding:14px;display:flex;gap:10px}
+.phone{flex:1;background:#fff;border-radius:10px;box-shadow:0 2px 8px rgba(0,0,0,.08);padding:10px 8px;display:flex;flex-direction:column;gap:5px}
+.phone i{display:block;height:6px;border-radius:3px;background:#DDE6E3}
+.phone i.h{height:10px;width:70%;background:#1D7A69}
+.phone i.b{margin-top:auto;height:14px;background:#F2B544;border-radius:5px}
+.attach .meta{padding:8px 12px;font-size:13px;display:flex;justify-content:space-between;color:var(--muted)}
+.attach .meta b{color:var(--fg);font-weight:600}
+
+.tools{position:absolute;top:-14px;right:22px;display:none;background:var(--card);border:1px solid var(--line);border-radius:9px;box-shadow:var(--shadow);padding:3px;gap:2px;z-index:3}
+.msg:hover .tools,.msg.active .tools,.msg:focus-within .tools{display:flex}
+.tools button{font-size:12px;font-family:var(--font-ko);padding:5px 9px;border-radius:6px;display:flex;align-items:center;gap:5px;white-space:nowrap}
+.tools button:hover{background:var(--hover)}
+.tools button[aria-pressed="true"]{color:var(--accent);background:var(--accent-soft)}
+.tools svg{width:14px;height:14px}
+
+.typing{height:22px;padding:0 22px;font-size:12px;color:var(--muted);font-family:var(--font-ko);display:flex;align-items:center;gap:6px}
+.dots{display:inline-flex;gap:3px}
+.dots i{width:5px;height:5px;border-radius:50%;background:var(--muted);animation:bop 1.2s infinite}
+.dots i:nth-child(2){animation-delay:.15s}.dots i:nth-child(3){animation-delay:.3s}
+@keyframes bop{0%,60%,100%{opacity:.3;transform:none}30%{opacity:1;transform:translateY(-2px)}}
+
+/* composer */
+.composer-wrap{padding:0 18px 16px;position:relative;flex-shrink:0}
+.composer{border:1px solid var(--line);border-radius:12px;background:var(--card)}
+.composer:focus-within{border-color:var(--accent)}
+.fmt{display:flex;gap:2px;padding:6px 8px;border-bottom:1px solid var(--line);color:var(--muted);font-size:13px}
+.fmt span{padding:2px 7px;border-radius:5px;font-weight:700}
+.composer textarea{width:100%;border:0;resize:none;background:transparent;color:var(--fg);font:inherit;padding:10px 14px;min-height:44px;max-height:160px;outline:none;display:block;box-sizing:border-box}
+.comp-bar{display:flex;align-items:center;gap:6px;padding:6px 8px}
+.help-btn{display:flex;align-items:center;gap:6px;font-size:13px;font-family:var(--font-ko);font-weight:600;color:var(--accent);background:var(--accent-soft);padding:6px 10px;border-radius:8px}
+.help-btn:hover{filter:brightness(.97)}
+.send{margin-left:auto;width:34px;height:30px;border-radius:7px;display:grid;place-items:center;background:var(--accent);color:#fff}
+.send:disabled{background:var(--hover);color:var(--muted);cursor:default}
+.send svg{width:16px;height:16px}
+.hint{font-size:12px;color:var(--muted);font-family:var(--font-ko);padding:6px 4px 0}
+
+.pop{position:absolute;left:18px;right:18px;bottom:calc(100% - 8px);background:var(--card);border:1px solid var(--line);border-radius:14px;box-shadow:var(--shadow);padding:14px;z-index:5;font-family:var(--font-ko);max-width:560px}
+.pop h3{margin:0 0 8px;font-size:14px}
+.pop-row{display:flex;gap:8px}
+.pop input{flex:1;min-width:0;border:1px solid var(--line);border-radius:8px;padding:8px 10px;font:inherit;font-size:14px;background:var(--bg);color:var(--fg)}
+.pop .go{background:var(--accent);color:#fff;border-radius:8px;padding:0 14px;font-weight:600;font-size:13px;white-space:nowrap}
+.sugs{display:grid;gap:8px;margin-top:10px}
+.sug{border:1px solid var(--line);border-radius:10px;padding:10px 12px;display:grid;gap:6px}
+.sug .tone{font-size:11px;font-weight:700;letter-spacing:.04em;color:var(--muted)}
+.sug .en{font-family:var(--font-ui);line-height:1.45}
+.sug button{justify-self:start;font-size:12px;font-weight:600;color:var(--accent)}
+.pop .note{font-size:12px;color:var(--muted);margin:10px 0 0}
+
+/* mission panel */
+.panel{background:var(--panel);border-left:1px solid var(--line);overflow:auto;padding:18px 18px 28px;font-family:var(--font-ko);display:flex;flex-direction:column;gap:22px}
+.p-eyebrow{font-size:11px;letter-spacing:.08em;font-weight:700;color:var(--accent);text-transform:uppercase;font-family:var(--font-ui)}
+.brief h2{margin:4px 0 6px;font-size:18px;line-height:1.35;text-wrap:balance}
+.brief p{margin:0;color:var(--muted);font-size:14px;line-height:1.6}
+.brief .where{margin-top:10px;display:inline-flex;align-items:center;gap:6px;font-size:13px;font-weight:600;color:var(--accent);background:var(--accent-soft);padding:5px 10px;border-radius:7px}
+.checks{display:grid;gap:4px;margin:8px 0 0;padding:0;list-style:none}
+.checks li{display:grid;grid-template-columns:22px 1fr;gap:8px;align-items:start;padding:8px 10px;border-radius:9px;font-size:14px;line-height:1.4}
+.checks li.cur{background:var(--card);box-shadow:0 1px 0 var(--line)}
+.checks li.done{color:var(--muted)}
+.checks li.done .lbl{text-decoration:line-through}
+.ck{width:20px;height:20px;border-radius:50%;border:2px solid var(--line);display:grid;place-items:center;font-size:11px;color:#fff;margin-top:-1px}
+.done .ck{background:var(--accent);border-color:var(--accent)}
+.cur .ck{border-color:var(--accent)}
+.h-sec{font-size:13px;font-weight:700;display:flex;justify-content:space-between;align-items:center}
+.h-sec span{color:var(--muted);font-weight:500;font-variant-numeric:tabular-nums}
+.vocab{display:grid;gap:8px;margin-top:8px}
+.voc{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:10px 12px}
+.voc b{font-family:var(--font-ui);font-size:15px;display:block}
+.voc span{font-size:13px;color:var(--muted)}
+.empty{font-size:13px;color:var(--muted);line-height:1.6;border:1px dashed var(--line);border-radius:10px;padding:12px}
+.review{background:var(--card);border:1px solid var(--accent);border-radius:12px;padding:14px}
+.review h3{margin:2px 0 8px;font-size:16px}
+.review ol{margin:0;padding-left:18px;display:grid;gap:6px;font-family:var(--font-ui);font-size:14px;line-height:1.45}
+.review p{font-size:13px;color:var(--muted);margin:10px 0 0;line-height:1.55}
+.restart{margin-top:10px;font-size:13px;font-weight:600;color:var(--accent)}
+
+.toast{position:fixed;left:50%;bottom:calc(24px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--fg);color:var(--bg);padding:10px 16px;border-radius:10px;font-size:13px;font-family:var(--font-ko);box-shadow:var(--shadow);z-index:20;max-width:calc(100% - 32px)}
+.scrim{display:none}
+
+
+.chat-view{display:flex;flex-direction:column;flex:1;min-height:0}
+.nav-item .cnt{font-size:12px;color:var(--side-muted);font-variant-numeric:tabular-nums}
+.react{cursor:pointer;color:var(--fg)}
+.react:hover{border-color:var(--muted)}
+.react.add{color:var(--muted);padding:1px 7px}
+.react.add svg{width:15px;height:15px}
+.react.pop{animation:pop .4s cubic-bezier(.3,1.6,.5,1)}
+@keyframes pop{0%{transform:scale(.3);opacity:0}100%{transform:none;opacity:1}}
+.picker{position:fixed;z-index:30;background:var(--card);border:1px solid var(--line);border-radius:12px;box-shadow:var(--shadow);padding:6px;display:flex;gap:2px}
+.picker button{font-size:20px;width:36px;height:36px;border-radius:8px}
+.picker button:hover{background:var(--hover);transform:scale(1.12)}
+.kw{border-bottom:1.5px dashed var(--accent);cursor:pointer;position:relative}
+.kw:hover{background:var(--accent-soft)}
+.kw .kt{display:none;position:absolute;left:0;bottom:calc(100% + 8px);background:var(--fg);color:var(--bg);font-family:var(--font-ko);font-size:12px;line-height:1.45;padding:7px 10px;border-radius:8px;z-index:6;width:max-content;max-width:240px;white-space:normal;font-weight:500;box-shadow:var(--shadow)}
+.kw .kt b{display:block;font-family:var(--font-ui);font-size:13px}
+.kw .kt small{display:block;opacity:.7;margin-top:3px}
+.kw:hover .kt{display:block}
+.text.veiled .kw .kt{display:none}
+.tip{position:absolute;left:18px;bottom:calc(100% - 6px);background:var(--card);border:1px solid var(--line);border-radius:12px;box-shadow:var(--shadow);padding:10px 12px 12px;z-index:5;max-width:min(620px,calc(100% - 36px));font-family:var(--font-ko)}
+.tip::after{content:"";position:absolute;left:28px;bottom:-6px;width:10px;height:10px;background:var(--card);border-right:1px solid var(--line);border-bottom:1px solid var(--line);transform:rotate(45deg)}
+.tip-head{display:flex;justify-content:space-between;align-items:center;gap:12px;font-size:12px;font-weight:700;color:var(--accent);margin-bottom:8px}
+.tip-head button{font-size:12px;color:var(--muted);font-weight:500}
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.chip{border:1px solid var(--line);background:var(--bg);border-radius:9px;padding:5px 10px;text-align:left;display:grid;gap:1px}
+.chip:hover{border-color:var(--accent);background:var(--accent-soft)}
+.chip b{font-family:var(--font-ui);font-weight:600;font-size:13px}
+.chip span{font-size:11px;color:var(--muted)}
+.vocab-view{flex:1;overflow:auto;padding:22px 22px 40px;font-family:var(--font-ko)}
+.vv-list{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:12px;max-width:980px}
+.vcard{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:14px 16px;display:flex;flex-direction:column;gap:6px}
+.vcard .en{font-family:var(--font-ui);font-size:18px;font-weight:700}
+.vcard .mean{font-size:14px;line-height:1.5;transition:filter .2s}
+.vcard .mean.veiled{filter:blur(6px);cursor:pointer;user-select:none}
+.vcard .ex{font-family:var(--font-ui);font-size:13px;color:var(--muted);line-height:1.5;border-left:2px solid var(--line);padding-left:8px}
+.vcard .src{font-size:12px;color:var(--muted)}
+.vcard .acts{display:flex;gap:12px;margin-top:4px}
+.vcard .acts button{font-size:12px;font-weight:600;color:var(--accent)}
+.vcard .acts button.del{color:var(--muted)}
+.vv-empty{max-width:460px;border:1px dashed var(--line);border-radius:12px;padding:20px;color:var(--muted);line-height:1.7;font-size:14px}
+.vv-empty button{margin-top:10px;font-weight:600;color:var(--accent)}
+.voc{cursor:pointer}
+
+.help-btn.ghost{background:transparent;border:1px solid var(--line);color:var(--fg)}
+.only-short{display:none}
+.react.rin{animation:rin .35s cubic-bezier(.3,1.6,.5,1)}
+@keyframes rin{0%{transform:scale(.4);opacity:0}100%{transform:none;opacity:1}}
+.react .n{display:inline-block;min-width:.6em;text-align:center}
+.react .n.bump{animation:tickup .32s ease-out}
+@keyframes tickup{0%{transform:translateY(80%);opacity:0}100%{transform:none;opacity:1}}
+.ab{border-bottom:1.5px dotted var(--muted);cursor:help;position:relative;font-weight:600}
+.ab:hover{background:var(--hover)}
+.ab .kt{display:none;position:absolute;left:0;bottom:calc(100% + 8px);background:var(--fg);color:var(--bg);font-family:var(--font-ko);font-size:12px;line-height:1.45;padding:7px 10px;border-radius:8px;z-index:6;width:max-content;max-width:240px;white-space:normal;font-weight:500;box-shadow:var(--shadow)}
+.ab .kt b{display:block;font-family:var(--font-ui);font-size:13px}
+.ab .kt small{display:block;opacity:.7;margin-top:3px}
+.ab:hover .kt{display:block}
+.text.veiled .ab .kt{display:none}
+.coach{margin-top:8px;border:1px solid var(--line);background:var(--card);border-radius:10px;padding:10px 12px;max-width:560px;font-family:var(--font-ko)}
+.coach .ch-top{display:flex;align-items:center;gap:8px;font-size:12px;font-weight:700;color:var(--accent);flex-wrap:wrap}
+.coach .verdict{font-weight:600;border-radius:20px;padding:1px 8px;background:var(--accent-soft);color:var(--accent)}
+.coach .verdict.fix{background:var(--mention-bg);color:var(--mention-fg)}
+.coach .nat{font-family:var(--font-ui);font-size:15px;line-height:1.5;margin:6px 0 4px;color:var(--fg)}
+.coach .why{font-size:13px;color:var(--muted);line-height:1.55}
+.coach .c-acts{display:flex;gap:14px;margin-top:6px}
+.coach .c-acts button{font-size:12px;font-weight:600;color:var(--accent)}
+.coach .c-acts button.mute{color:var(--muted)}
+.coach.loading{color:var(--muted);font-size:13px;display:flex;align-items:center;gap:8px}
+.coach.mini{padding:6px 10px}
+.quiz{max-width:600px}
+.q-head{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap}
+.q-head b{font-size:14px}
+.seg{display:flex;border:1px solid var(--line);border-radius:8px;overflow:hidden}
+.seg button{font-size:12px;padding:4px 10px}
+.seg button[aria-pressed="true"]{background:var(--accent);color:#fff}
+.q-ko{font-size:13px;color:var(--muted);margin:8px 0 10px;line-height:1.55}
+.q-sent{font-family:var(--font-ui);font-size:16px;line-height:2.1}
+.slot{display:inline-block;min-width:74px;border-bottom:2px solid var(--accent);padding:0 6px;margin:0 2px;text-align:center;font-weight:600;color:var(--accent);border-radius:4px 4px 0 0;line-height:1.5}
+.slot.empty{color:transparent;background:var(--accent-soft)}
+.slot.next{box-shadow:0 0 0 2px var(--accent)}
+.slot.ok{color:#fff;background:var(--accent);border-color:var(--accent)}
+.slot.no{color:var(--badge);border-color:var(--badge);background:color-mix(in srgb,var(--badge) 12%,transparent);animation:shake .3s}
+@keyframes shake{25%{transform:translateX(-3px)}75%{transform:translateX(3px)}}
+.bank{display:flex;flex-wrap:wrap;gap:6px;margin-top:12px}
+.bank button{font-family:var(--font-ui);font-size:14px;font-weight:600;border:1px solid var(--line);background:var(--bg);border-radius:8px;padding:5px 12px}
+.bank button:hover{border-color:var(--accent)}
+.bank button:disabled{opacity:.3;cursor:default}
+.q-acts{display:flex;gap:8px;align-items:center;margin-top:12px;flex-wrap:wrap}
+.q-acts button{font-size:13px;font-weight:600;border-radius:8px;padding:7px 12px}
+.q-acts .pri{background:var(--accent);color:#fff}
+.q-acts .pri:disabled{background:var(--hover);color:var(--muted);cursor:default}
+.q-acts .sec{color:var(--accent)}
+.q-acts .x{margin-left:auto;color:var(--muted);font-weight:500}
+.q-msg{font-size:13px;margin:8px 0 0;color:var(--muted)}
+.tabs{display:flex;gap:4px;margin-bottom:16px;border-bottom:1px solid var(--line)}
+.tabs button{padding:8px 12px;font-size:14px;font-weight:600;color:var(--muted);border-bottom:2px solid transparent;margin-bottom:-1px}
+.tabs button[aria-selected="true"]{color:var(--fg);border-color:var(--accent)}
+.dict{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:10px;max-width:980px}
+.dict .d{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:10px 12px;display:grid;gap:3px}
+.dict .d b{font-family:var(--font-ui);font-size:16px}
+.dict .d .full{font-family:var(--font-ui);font-size:13px;color:var(--accent);font-weight:600}
+.dict .d span{font-size:13px;color:var(--muted);line-height:1.5}
+.dict .d .seen{font-size:11px;font-weight:700;color:var(--mention-fg);background:var(--mention-bg);border-radius:10px;padding:1px 7px;justify-self:start}
+.kw.flip .kt,.ab.flip .kt{left:auto;right:0}
+.used{font-size:11px;color:var(--muted);grid-column:2;margin-top:-4px}
+.stat{font-size:13px;margin-top:8px;color:var(--fg)}
+
+@media (max-width:1100px){
+  .app{grid-template-columns:64px 230px minmax(0,1fr)}
+  .panel{position:fixed;top:0;right:0;bottom:0;width:min(320px,88vw);z-index:12;box-shadow:var(--shadow);transform:translateX(105%);transition:transform .25s;padding-top:calc(18px + env(safe-area-inset-top,0px))}
+  .app.show-panel .panel{transform:none}
+  .only-narrow.pn{display:flex}
+  .app.show-panel .scrim,.app.show-side .scrim{display:block;position:fixed;inset:0;background:#0006;z-index:11}
+}
+@media (max-width:720px){
+  .app{grid-template-columns:minmax(0,1fr)}
+  .rail{display:none}
+  .side{position:fixed;top:0;left:0;bottom:0;width:min(280px,84vw);z-index:12;transform:translateX(-105%);transition:transform .25s;padding-top:env(safe-area-inset-top,0px)}
+  .app.show-side .side{transform:none}
+  .only-narrow.sd{display:flex}
+  .topbar{padding:0 12px;gap:8px}
+  .topic{display:none}
+  .msg{padding:7px 16px}
+  .intro,.day{padding-left:16px;padding-right:16px}
+  .composer-wrap{padding:0 12px 12px}
+  .pop{left:12px;right:12px}
+  .tools{right:12px}
+  .tip{left:12px;max-width:calc(100% - 24px)}
+  .vocab-view{padding:18px 16px 32px}
+  .tb-btn .lbl-long,.help-btn .lbl-long{display:none}
+  .only-short{display:inline}
+}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+<style>:root{color-scheme:light}body{margin:0;font-size:14px;-webkit-font-smoothing:antialiased}img{max-width:100%}</style>
+</head>
+<body>
+
+
+<div class="app" id="app">
+  <nav class="rail" aria-label="워크스페이스">
+    <div class="ws-logo" title="Orbit Labs">OL</div>
+    <button class="rail-btn on" data-rail="home"><span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 11l9-7 9 7v9a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z"/></svg></span>홈</button>
+    <button class="rail-btn" data-rail="dm"><span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12a8 8 0 0 1-11.6 7.1L4 20l1-4.6A8 8 0 1 1 21 12z"/></svg></span>DM</button>
+    <button class="rail-btn" data-rail="vocab"><span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 4h14v17l-7-4-7 4z"/></svg></span>단어장</button>
+  </nav>
+
+  <aside class="side" id="side">
+    <div class="side-head">
+      <div class="ws-name">Orbit Labs <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M6 9l6 6 6-6"/></svg></div>
+      <div class="ws-sub">가상 회사 · 입사 첫 주</div>
+    </div>
+    <div class="side-scroll" id="nav"></div>
+    <div class="side-foot"><div class="me">S</div><div><b>Solbi</b><span>Product Designer · 나</span></div></div>
+  </aside>
+
+  <main class="main">
+    <header class="topbar">
+      <button class="tb-btn only-narrow sd" id="openSide" aria-label="채널 목록 열기"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 6h16M4 12h16M4 18h16"/></svg></button>
+      <h1><span id="chIcon">#</span><span class="t" id="chName">general</span></h1>
+      <div class="topic" id="chTopic"></div>
+      <button class="tb-btn" id="veilAll" aria-pressed="false"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 3l18 18M10.6 5.1A10 10 0 0 1 12 5c5 0 9 4.5 10 7a13 13 0 0 1-3.2 4.3M6.6 6.6C4.3 8 2.7 10.2 2 12c1 2.5 5 7 10 7a9.6 9.6 0 0 0 5.4-1.6"/></svg><span class="lbl-long">모두 가리기</span></button>
+      <button class="tb-btn" id="quizBtn" aria-pressed="false" hidden>뜻 가리기</button>
+      <button class="tb-btn only-narrow pn" id="openPanel">미션</button>
+    </header>
+
+    <div class="chat-view" id="chatView">
+    <div class="msgs" id="msgs" aria-live="polite"></div>
+    <div class="typing" id="typing"></div>
+
+    <div class="composer-wrap">
+      <div class="tip" id="tip" hidden>
+        <div class="tip-head"><span id="tipTitle">이 상황에서 자주 쓰는 표현</span><button id="tipClose" aria-label="추천 닫기">닫기</button></div>
+        <div class="chips" id="chips"></div>
+      </div>
+      <div class="pop quiz" id="quiz" hidden></div>
+      <div class="pop" id="pop" hidden>
+        <h3>한국어로 하고 싶은 말을 적어보세요</h3>
+        <div class="pop-row">
+          <input id="koInput" placeholder="예: 피드백 감사해요, CTA는 위로 올릴게요">
+          <button class="go" id="koGo">표현 추천</button>
+        </div>
+        <div class="sugs" id="sugs"></div>
+        <p class="note">지금은 미션별 예시 표현이 나와요. AI가 연결되면 입력한 문장에 맞춰 추천해요.</p>
+      </div>
+      <div class="composer">
+        <div class="fmt" aria-hidden="true"><span>B</span><span><i>I</i></span><span><s>S</s></span><span>&lt;/&gt;</span></div>
+        <textarea id="input" rows="1" placeholder=""></textarea>
+        <div class="comp-bar">
+          <button class="help-btn" id="quizBtn2" aria-expanded="false">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M9.5 9.2a2.6 2.6 0 0 1 5 1c0 1.8-2.5 2.2-2.5 3.8M12 17h.01"/></svg>
+            도움 요청
+          </button>
+          <button class="help-btn ghost" id="helpBtn" aria-expanded="false">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3l2.2 5.8L20 11l-5.8 2.2L12 19l-2.2-5.8L4 11l5.8-2.2z"/></svg>
+            <span class="lbl-long">한국어로 쓰기</span><span class="only-short">한→영</span>
+          </button>
+          <button class="send" id="send" disabled aria-label="보내기"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M3 20.5l18-8.5L3 3.5l2.5 8.5zM5.5 12H13"/></svg></button>
+        </div>
+      </div>
+      <div class="hint">Enter로 보내기 · Shift+Enter 줄바꿈</div>
+    </div>
+    </div>
+    <div class="vocab-view" id="vocabView" hidden></div>
+  </main>
+
+  <aside class="panel" id="panel" aria-label="미션"></aside>
+  <div class="scrim" id="scrim"></div>
+</div>
+<div class="toast" id="toast" hidden></div>
+<div class="picker" id="picker" hidden></div>
+
+<script>
+const P = {
+  maya:{name:"Maya Chen",role:"Design Lead",c:"#C4577A",i:"M"},
+  jake:{name:"Jake Morrison",role:"Product Manager",c:"#3D6FD1",i:"J"},
+  priya:{name:"Priya Nair",role:"Frontend Engineer",c:"#8A5CC7",i:"P"},
+  tom:{name:"Tom Becker",role:"Product Designer",c:"#D9822B",i:"T"},
+  me:{name:"Solbi",role:"Product Designer",c:"#E3A72F",i:"S"}
+};
+const CH = {
+  general:{kind:"ch",name:"general",topic:"회사 전체 공지와 인사",msgs:[]},
+  design:{kind:"ch",name:"design",topic:"디자인 시안 공유와 피드백",msgs:[]},
+  product:{kind:"ch",name:"product",topic:"출시 일정과 제품 논의",msgs:[]},
+  "dm-maya":{kind:"dm",who:"maya",msgs:[]},
+  "dm-jake":{kind:"dm",who:"jake",msgs:[]},
+  "dm-priya":{kind:"dm",who:"priya",msgs:[]},
+  "dm-tom":{kind:"dm",who:"tom",msgs:[]}
+};
+const MISSIONS = [
+  {ch:"general",title:"#general에서 자기소개하기",
+   brief:"Maya가 팀에 솔비님을 소개해줬어요. 반갑게 인사하고, 어떤 일을 맡게 됐는지 한두 문장으로 말해보세요.",
+   sugs:[{tone:"CASUAL",en:"Hi everyone! I'm Solbi, the new product designer. Super excited to be here 😊"},
+         {tone:"POLITE",en:"Thanks for the warm welcome, Maya! I'm Solbi, and I'll be working on product design. Looking forward to working with you all."}],
+   cloze:[{s:"Hi everyone! I'm Solbi, the new product designer. Super [excited] to be [here] 😊",ko:"안녕하세요 여러분! 새로 온 프로덕트 디자이너 솔비예요. 합류하게 돼서 정말 설레요 😊",d:["exciting","there"]},
+          {s:"Thanks for the [warm] welcome, Maya! I'm Solbi, and I'll be [working] on product design. Looking [forward] to working with you all.",ko:"따뜻하게 맞아줘서 고마워요, Maya! 솔비고, 프로덕트 디자인을 맡게 됐어요. 다 같이 일하는 거 기대돼요.",d:["hot","work","ahead"]}],
+   phrases:[["Thanks for the warm welcome","따뜻하게 맞아줘서 고마워요"],["Excited to be here","합류하게 돼서 설레요"],["I'll be working on ~","~를 맡게 됐어요"],["Looking forward to working with you all","다 같이 일하는 거 기대돼요"],["Nice to e-meet you","(온라인으로) 만나서 반가워요"]]},
+  {ch:"design",title:"디자인 피드백에 답하기",
+   brief:"#design에 올린 온보딩 시안에 Maya와 Priya가 의견을 남겼어요. 고맙다고 하고, 어떻게 반영할지 말해보세요.",
+   sugs:[{tone:"CASUAL",en:"Thanks both! Good call on the CTA, I'll move it above the fold. And a static version totally works for v1."},
+         {tone:"POLITE",en:"Thank you for the thoughtful feedback! I'll bring the CTA above the fold and try a lighter weight for the body copy. Priya, a static version sounds good for v1, and we can revisit the animation later."}],
+   cloze:[{s:"Thanks both! Good [call] on the CTA, I'll move it above the [fold]. And a static version [totally] works for v1.",ko:"둘 다 고마워요! CTA 좋은 지적이에요, 첫 화면 안으로 올릴게요. 그리고 v1은 정적인 버전으로 완전 괜찮아요.",d:["idea","line","total"]},
+          {s:"Thank you for the thoughtful [feedback]! I'll bring the CTA above the fold and try a [lighter] weight for the body copy. Priya, a static version sounds good for v1, and we can [revisit] the animation later.",ko:"세심한 피드백 감사해요! CTA는 첫 화면 안으로 올리고, 본문은 더 가벼운 두께로 해볼게요. Priya, v1은 정적인 버전 좋아요. 애니메이션은 나중에 다시 봐요.",d:["feedbacks","light","return"]}],
+   phrases:[["Thanks for the feedback","피드백 고마워요"],["Good call on ~","~ 좋은 지적이에요"],["above the fold","첫 화면 안에 (스크롤 없이 보이게)"],["Totally fair","완전 일리 있어요"],["We can revisit ~ later","~는 나중에 다시 보죠"]]},
+  {ch:"dm-jake",title:"마감을 하루 미뤄달라고 요청하기",
+   brief:"Jake가 DM으로 일정을 확인해요. 피드백을 반영하느라 하루가 더 필요하다고 정중하게 요청해보세요.",
+   sugs:[{tone:"CASUAL",en:"Hey Jake, I might need one more day to fold in the feedback. Would Thursday work?"},
+         {tone:"POLITE",en:"Hi Jake, just a heads-up: I'll need one extra day to reflect the design feedback. Would it be okay to hand off the final screens by Thursday?"}],
+   cloze:[{s:"Hey Jake, I might need one more [day] to [fold] in the feedback. Would Thursday [work]?",ko:"Jake, 피드백 반영하려면 하루 더 필요할 것 같아요. 목요일 괜찮을까요?",d:["days","put","okay"]},
+          {s:"Hi Jake, just a [heads-up]: I'll need one [extra] day to reflect the design feedback. Would it be [okay] to hand off the final screens by Thursday?",ko:"Jake, 미리 말씀드려요. 디자인 피드백 반영하느라 하루가 더 필요해요. 최종 화면을 목요일까지 넘겨드려도 괜찮을까요?",d:["head-up","extras","able"]}],
+   phrases:[["Just a heads-up","미리 말씀드리면"],["I'll need one more day","하루만 더 필요할 것 같아요"],["to fold in the feedback","피드백을 반영하려고"],["Would Thursday work?","목요일 괜찮을까요?"],["Sorry for the short notice","급하게 말씀드려 죄송해요"]]}
+];
+const GENERIC=[["Sounds good","좋아요"],["Will do","그렇게 할게요"],["On it!","바로 할게요!"],["Thanks a ton","정말 고마워요"],["Let me know if ~","~면 알려주세요"]];
+const SWAPS=[
+  {re:/\bthank(s| you)\b/i,alts:[["Appreciate it","고마워요 (조금 더 어른스럽게)"],["Thanks a ton","정말 고마워요"],["Thanks for flagging this","짚어줘서 고마워요"]]},
+  {re:/\bsorry\b/i,alts:[["Apologies for the delay","늦어져서 죄송해요"],["Sorry for the short notice","급하게 말해서 미안해요"],["My bad","제 실수예요 (캐주얼)"]]},
+  {re:/\bI think\b/i,alts:[["I'd suggest","~를 제안해요"],["How about","~는 어때요?"],["In my view","제 생각엔"]]},
+  {re:/\b(late|delay(ed)?|more time|one more day)\b/i,alts:[["push back the deadline","마감을 미루다"],["need a bit more time","시간이 좀 더 필요해요"],["Would that work for you?","괜찮으실까요?"]]},
+  {re:/\b(check|see)\b/i,alts:[["take a look","한번 볼게요"],["double-check","한 번 더 확인하다"],["go over","검토하다"]]},
+  {re:/\b(ok|okay)\b/i,alts:[["Sounds good","좋아요"],["Works for me","저는 괜찮아요"],["Got it","알겠어요"]]},
+  {re:/\b(good|nice)\b/i,alts:[["Good call","좋은 판단이에요"],["Love this","너무 좋아요"],["Nice catch","잘 찾아냈네요"]]},
+  {re:/\b(hello|hi)\b/i,alts:[["Hey all","다들 안녕하세요"],["Hi team","팀 여러분 안녕하세요"]]},
+  {re:/\bmove\b/i,alts:[["bring it above the fold","첫 화면으로 올리다"],["shift","옮기다, 바꾸다"]]}
+];
+const ABBR={
+  "EOD":["End of Day","그날 업무 끝나기 전까지"],
+  "EOW":["End of Week","이번 주 안에"],
+  "ETA":["Estimated Time of Arrival","예상 완료(도착) 시점"],
+  "FYI":["For Your Information","참고로 알려드려요"],
+  "ASAP":["As Soon As Possible","가능한 한 빨리"],
+  "OOO":["Out Of Office","부재중 (휴가, 외근 등)"],
+  "PTO":["Paid Time Off","유급 휴가"],
+  "WFH":["Work From Home","재택근무"],
+  "LGTM":["Looks Good To Me","좋아 보여요 (승인할게요)"],
+  "PTAL":["Please Take A Look","한번 봐주세요"],
+  "TL;DR":["Too Long; Didn't Read","요약하면"],
+  "IMO":["In My Opinion","제 생각에는"],
+  "TBD":["To Be Determined","아직 미정"],
+  "WIP":["Work In Progress","작업 중"],
+  "PR":["Pull Request","코드 변경 검토 요청"],
+  "QA":["Quality Assurance","품질 검수, 테스트"],
+  "CTA":["Call To Action","행동 유도 버튼 (가입하기 등)"],
+  "1:1":["One-on-one","일대일 미팅"],
+  "+1":["Plus one","동의해요, 저도요"],
+  "v1":["Version 1","첫 번째 버전"],
+  "lmk":["Let Me Know","알려주세요"],
+  "IIRC":["If I Recall Correctly","제 기억이 맞다면"],
+  "NVM":["Never Mind","신경 쓰지 마세요, 됐어요"],
+  "ICYMI":["In Case You Missed It","혹시 못 보셨을까 봐"]
+};
+const ABBR_RE=new RegExp("(?<![\\w+])("+Object.keys(ABBR).sort((a,b)=>b.length-a.length).map(k=>k.replace(/[.*+?^${}()|[\]\\]/g,"\\$&")).join("|")+")(?![\\w])","g");
+const EMOJI=["👍","🙌","🎉","❤️","😂","🙏","👀","✅"];
+
+const S = {view:"chat",vtab:"mine",cur:"general",stage:0,unread:{},mention:{},vocab:[],veilAll:false,quiz:false,mine:[],clock:9*60+2,busy:false,noted:false,tipOff:false,help:{},seenAbbr:new Set()};
+let uid=0, SAMPLE=null, aiOff=false;
+const IN_CLAUDE=!!window.claude?.use;
+if(IN_CLAUDE) claude.use("sample").then(s=>{SAMPLE=s}).catch(()=>{});
+const $=id=>document.getElementById(id);
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const fmtT=m=>{const h=Math.floor(m/60),mm=String(m%60).padStart(2,"0");return `${h>12?h-12:h}:${mm} ${h>=12?"PM":"AM"}`};
+const tick=n=>{S.clock+=n;return fmtT(S.clock)};
+const wait=ms=>new Promise(r=>setTimeout(r,ms));
+const chOf=id=>{for(const k in CH){if(CH[k].msgs.some(x=>x.id===id)) return k}};
+const findMsg=id=>{for(const k in CH){const m=CH[k].msgs.find(x=>x.id===id); if(m) return m}};
+const chLabel=k=>CH[k].kind==="ch"?`#${CH[k].name}`:`${P[CH[k].who].name} DM`;
+const shuffle=a=>{a=a.slice();for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]]}return a};
+
+function add(ch,m,{silent}={}){
+  m.id=++uid; m.time=m.time||fmtT(S.clock); m.reacts=m.reacts||[];
+  CH[ch].msgs.push(m);
+  if(m.from!=="me") for(const x of m.text.matchAll(ABBR_RE)) S.seenAbbr.add(x[1]);
+  if(!(ch===S.cur&&S.view==="chat") && !silent){
+    S.unread[ch]=(S.unread[ch]||0)+1;
+    if(m.text.includes("@Solbi")||CH[ch].kind==="dm") S.mention[ch]=true;
+  }
+  if(m.late) m.late.forEach(([e,d])=>lateReact(m,e,d));
+  if(ch===S.cur) renderMsgs(true);
+  renderNav();
+  return m;
+}
+function lateReact(m,e,delay){
+  setTimeout(()=>{
+    const r=m.reacts.find(x=>x.e===e);
+    if(r){r.n++; r.bump=true} else m.reacts.push({e,n:1,fresh:true});
+    if(chOf(m.id)===S.cur&&S.view==="chat") renderMsgs(false);
+  },delay);
+}
+
+/* nav */
+function renderNav(){
+  const chs=["general","design","product"], dms=["dm-maya","dm-jake","dm-priya","dm-tom"];
+  const item=k=>{
+    const c=CH[k], on=S.view==="chat"&&k===S.cur, u=S.unread[k]||0, ment=S.mention[k]&&!on;
+    const lead=c.kind==="ch"?`<span class="hash">#</span>`:`<span class="mini-av" style="background:${P[c.who].c}">${P[c.who].i}</span>`;
+    const nm=c.kind==="ch"?c.name:P[c.who].name;
+    return `<button class="nav-item${on?" on":""}${(u||ment)&&!on?" unread":""}" data-ch="${k}">${lead}<span class="nm">${esc(nm)}</span>${ment?`<span class="badge">${Math.max(u,1)}</span>`:""}</button>`;
+  };
+  $("nav").innerHTML=
+    `<button class="nav-item${S.view==="vocab"?" on":""}" data-view="vocab"><span class="hash">★</span><span class="nm">단어장</span><span class="cnt">${S.vocab.length}</span></button>`+
+    `<div class="sec-label">채널</div>${chs.map(item).join("")}<div class="sec-label">다이렉트 메시지</div>${dms.map(item).join("")}`;
+  document.querySelectorAll(".rail-btn").forEach(b=>{
+    const r=b.dataset.rail;
+    b.classList.toggle("on", S.view==="vocab"?r==="vocab":(CH[S.cur].kind==="dm"?r==="dm":r==="home"));
+  });
+}
+$("nav").addEventListener("click",e=>{
+  const v=e.target.closest("[data-view]"); if(v){openVocab(); app.classList.remove("show-side"); return}
+  const b=e.target.closest("[data-ch]"); if(!b) return;
+  go(b.dataset.ch); app.classList.remove("show-side");
+});
+document.querySelector(".rail").addEventListener("click",e=>{
+  const b=e.target.closest("[data-rail]"); if(!b) return;
+  const r=b.dataset.rail;
+  if(r==="vocab") openVocab();
+  else if(r==="dm") go(["dm-jake","dm-maya","dm-priya","dm-tom"].find(k=>S.mention[k])||"dm-maya");
+  else go(CH[S.cur].kind==="ch"?S.cur:"general");
+});
+
+function setChrome(){
+  const chat=S.view==="chat";
+  $("chatView").hidden=!chat; $("vocabView").hidden=chat;
+  $("veilAll").hidden=!chat; $("quizBtn").hidden=chat||S.vtab!=="mine";
+}
+function go(k){
+  S.view="chat"; S.cur=k; S.unread[k]=0; S.mention[k]=false;
+  const c=CH[k];
+  $("chIcon").textContent=c.kind==="ch"?"#":"@";
+  $("chName").textContent=c.kind==="ch"?c.name:P[c.who].name;
+  $("chTopic").textContent=c.kind==="ch"?c.topic:`${P[c.who].role} · 온라인`;
+  input.placeholder=c.kind==="ch"?`#${c.name}에 메시지 보내기`:`${P[c.who].name}에게 메시지 보내기`;
+  setChrome(); closePop(); closeQuiz(); hidePicker(); renderNav(); renderMsgs(true); renderTyping(); renderTip();
+}
+function openVocab(){
+  S.view="vocab";
+  $("chIcon").textContent="★"; $("chName").textContent="단어장";
+  setChrome(); hidePicker(); renderNav(); renderVocab();
+}
+
+/* messages */
+const ICON={
+  tr:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 5h8M8 3v2m2.5 0c-.8 4-3.4 7-6.5 8.5M6 9c1 2 3 3.5 5 4.5M13 21l4-10 4 10m-6.8-3.5h5.6"/></svg>',
+  veil:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></svg>',
+  save:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3l2.7 5.6 6.1.9-4.4 4.3 1 6.1L12 17l-5.4 2.9 1-6.1L3.2 9.5l6.1-.9z"/></svg>',
+  smile:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M8.5 14.5c.9 1.2 2.1 1.8 3.5 1.8s2.6-.6 3.5-1.8M9 9.5h.01M15 9.5h.01"/><path d="M19 3v4M17 5h4" stroke-width="1.8"/></svg>'
+};
+const isSaved=vid=>S.vocab.some(v=>v.vid===vid);
+function keyParts(m){return m.key?m.key.en.split(" / ").map(x=>x.replace(/\s*~\s*$/,"").trim()):[]}
+function fmtText(m){
+  const t=m.text, R=[];
+  const put=(s,e,type,d)=>{if(!R.some(r=>s<r.e&&e>r.s)) R.push({s,e,type,d})};
+  for(const x of t.matchAll(/@(Solbi|Maya|Jake|Priya|Tom)\b/g)) put(x.index,x.index+x[0].length,"men");
+  if(m.from!=="me") keyParts(m).forEach(k=>{const i=t.toLowerCase().indexOf(k.toLowerCase()); if(i>=0) put(i,i+k.length,"kw")});
+  if(m.from!=="me") for(const x of t.matchAll(ABBR_RE)) put(x.index,x.index+x[0].length,"ab",x[1]);
+  R.sort((a,b)=>a.s-b.s);
+  let out="",p=0;
+  for(const r of R){
+    out+=esc(t.slice(p,r.s)); const seg=esc(t.slice(r.s,r.e));
+    if(r.type==="men") out+=`<span class="mention">${seg}</span>`;
+    else if(r.type==="kw") out+=`<span class="kw" data-act="kw">${seg}<span class="kt"><b>${esc(m.key.en)}</b>${esc(m.key.ko)}<small>${isSaved("m"+m.id)?"단어장에 저장됨":"눌러서 단어장에 저장"}</small></span></span>`;
+    else {const [full,ko]=ABBR[r.d]; out+=`<span class="ab" data-act="ab" data-ab="${esc(r.d)}">${seg}<span class="kt"><b>${esc(r.d)} · ${esc(full)}</b>${esc(ko)}<small>${isSaved("a"+r.d)?"단어장에 저장됨":"업무 약어 · 눌러서 저장"}</small></span></span>`}
+    p=r.e;
+  }
+  return out+esc(t.slice(p));
+}
+function coachHTML(m){
+  const c=m.coach; if(!c||c.hidden) return "";
+  if(c.state==="loading") return `<div class="coach loading"><span class="dots"><i></i><i></i><i></i></span>원어민이라면 어떻게 쓸지 찾고 있어요</div>`;
+  if(c.state==="error") return `<div class="coach mini"><span class="why">원어민 제안을 불러오지 못했어요. <button class="c-retry" data-act="coach-retry" style="color:var(--accent);font-weight:600">다시 시도</button></span></div>`;
+  const fix=c.verdict!=="natural";
+  return `<div class="coach">
+    <div class="ch-top">원어민이라면 <span class="verdict${fix?" fix":""}">${c.example?"예시 표현":fix?"이렇게 다듬어보세요":"충분히 자연스러워요"}</span></div>
+    <div class="nat">${esc(c.natural)}</div>
+    ${c.why?`<div class="why">${esc(c.why)}</div>`:""}
+    <div class="c-acts">${c.phrase?`<button data-act="coach-save">${isSaved("c"+m.id)?"저장됨":`“${esc(c.phrase.en)}” 저장`}</button>`:""}<button class="mute" data-act="coach-hide">접기</button></div>
+  </div>`;
+}
+function renderMsgs(scroll){
+  if(S.view!=="chat") return;
+  const c=CH[S.cur], box=$("msgs");
+  const title=c.kind==="ch"?`#${c.name}`:P[c.who].name;
+  const sub=c.kind==="ch"?`${c.topic} 채널이에요.`:`${P[c.who].name}님과의 대화가 여기서 시작돼요. ${P[c.who].role}예요.`;
+  let html=`<div class="intro"><h2>${esc(title)}</h2><p>${esc(sub)}</p></div>`;
+  let prev=null;
+  c.msgs.forEach(m=>{
+    if(m.day) html+=`<div class="day"><span>${m.day}</span></div>`;
+    const p=P[m.from], cont=prev&&prev.from===m.from&&!m.day&&!m.attach;
+    const saved=isSaved("m"+m.id);
+    const mine=m.from==="me";
+    const veiled=(S.veilAll||m.veil)&&!m.peek&&!mine;
+    html+=`<div class="msg${cont?" cont":""}${m.text.includes("@Solbi")?" mentions-me":""}" data-id="${m.id}">
+      <div class="av" style="background:${p.c}">${p.i}</div>
+      <div style="min-width:0">
+        ${cont?"":`<div class="who"><b>${esc(p.name)}</b><span class="role">${esc(p.role)}${mine?" · 나":""}</span><time>${m.time}</time></div>`}
+        <div class="text${veiled?" veiled":""}" data-act="peek" title="${veiled?"눌러서 잠깐 보기":""}">${fmtText(m)}</div>
+        ${m.attach?`<div class="attach"><div class="prev"><div class="phone"><i class="h"></i><i></i><i style="width:80%"></i><i class="b"></i></div><div class="phone"><i class="h" style="width:50%"></i><i></i><i></i><i style="width:60%"></i><i class="b"></i></div><div class="phone"><i class="h" style="width:60%"></i><i style="width:70%"></i><i></i><i class="b"></i></div></div><div class="meta"><b>onboarding_v2.fig</b><span>Figma · 3 frames</span></div></div>`:""}
+        ${m.showKo&&m.ko?`<div class="ko">${esc(m.ko)}${m.key?`<span class="kx"><em>${esc(m.key.en)}</em> · ${esc(m.key.ko)}</span>`:""}</div>`:""}
+        ${m.reacts.length?`<div class="reacts">${m.reacts.map(r=>`<button class="react${r.mine?" mine":""}${r.fresh?" rin":""}" data-act="react" data-e="${r.e}" aria-pressed="${!!r.mine}">${r.e} <span class="n${r.bump?" bump":""}">${r.n}</span></button>`).join("")}<button class="react add" data-act="picker" aria-label="반응 추가">${ICON.smile}</button></div>`:""}
+        ${mine?coachHTML(m):""}
+      </div>
+      <div class="tools">
+        <button data-act="picker">${ICON.smile}반응</button>
+        ${mine?(m.coach&&m.coach.hidden?`<button data-act="coach-show">원어민 제안</button>`:""):`<button data-act="tr" aria-pressed="${!!m.showKo}">${ICON.tr}번역</button>
+        <button data-act="veil" aria-pressed="${!!m.veil}">${ICON.veil}가리기</button>
+        ${m.key?`<button data-act="save" aria-pressed="${saved}">${ICON.save}${saved?"저장됨":"저장"}</button>`:""}`}
+      </div>
+    </div>`;
+    prev=m;
+  });
+  const atBottom=box.scrollHeight-box.scrollTop-box.clientHeight<80;
+  box.innerHTML=html;
+  c.msgs.forEach(m=>m.reacts.forEach(r=>{r.fresh=false;r.bump=false}));
+  if(scroll||atBottom) box.scrollTop=box.scrollHeight;
+}
+function toggleReact(m,e){
+  const r=m.reacts.find(x=>x.e===e);
+  if(r&&r.mine){r.mine=false;r.n--; if(!r.n) m.reacts.splice(m.reacts.indexOf(r),1)}
+  else if(r){r.mine=true;r.n++;r.bump=true}
+  else m.reacts.push({e,n:1,mine:true,fresh:true});
+}
+function saveItem(item){
+  const i=S.vocab.findIndex(v=>v.vid===item.vid);
+  if(i>=0){S.vocab.splice(i,1); toast("단어장에서 뺐어요")}
+  else {S.vocab.unshift(item); toast(`단어장에 저장했어요: ${item.en}`)}
+  renderPanel(); renderNav();
+}
+const saveKey=m=>m.key&&saveItem({vid:"m"+m.id,msg:m.id,en:m.key.en,ko:m.key.ko,from:m.from,ch:chOf(m.id),ex:m.text});
+$("msgs").addEventListener("click",e=>{
+  const row=e.target.closest(".msg"); if(!row) return;
+  const m=findMsg(+row.dataset.id); const el=e.target.closest("[data-act]"); const act=el?.dataset.act;
+  if(!act){document.querySelectorAll(".msg.active").forEach(x=>x!==row&&x.classList.remove("active")); row.classList.toggle("active"); return}
+  const veiled=(S.veilAll||m.veil)&&!m.peek&&m.from!=="me";
+  if(act==="picker"){showPicker(el,m); return}
+  if(act==="react") toggleReact(m,el.dataset.e);
+  else if(act==="tr") m.showKo=!m.showKo;
+  else if(act==="veil"){m.veil=!m.veil; m.peek=false}
+  else if((act==="kw"||act==="ab")&&veiled) m.peek=true;
+  else if(act==="kw") saveKey(m);
+  else if(act==="ab"){const k=el.dataset.ab; saveItem({vid:"a"+k,msg:m.id,en:k,ko:`${ABBR[k][0]} · ${ABBR[k][1]}`,from:m.from,ch:chOf(m.id),ex:m.text})}
+  else if(act==="peek"){ if(!veiled&&!m.peek) {row.classList.toggle("active");return} m.peek=!m.peek }
+  else if(act==="save") saveKey(m);
+  else if(act==="coach-hide") m.coach.hidden=true;
+  else if(act==="coach-show") m.coach.hidden=false;
+  else if(act==="coach-retry") coach(m);
+  else if(act==="coach-save"){const c=m.coach; saveItem({vid:"c"+m.id,msg:m.id,en:c.phrase.en,ko:c.phrase.ko,from:"me",ch:chOf(m.id),ex:c.natural})}
+  renderMsgs(false);
+  const again=document.querySelector(`.msg[data-id="${m.id}"]`); if(again&&act!=="peek"&&act!=="react") again.classList.add("active");
+});
+$("veilAll").addEventListener("click",e=>{
+  S.veilAll=!S.veilAll; e.currentTarget.setAttribute("aria-pressed",S.veilAll);
+  for(const k in CH) CH[k].msgs.forEach(m=>m.peek=false);
+  renderMsgs(false);
+});
+
+$("msgs").addEventListener("mouseover",e=>{
+  const w=e.target.closest(".kw,.ab"); if(!w) return;
+  const box=$("msgs").getBoundingClientRect(), r=w.getBoundingClientRect();
+  w.classList.toggle("flip", r.left+250>box.right);
+});
+
+/* native-speaker coach */
+function recentContext(ch,upto){
+  const list=CH[ch].msgs, i=list.indexOf(upto);
+  return list.slice(Math.max(0,i-5),i).map(x=>`${x.from==="me"?"Solbi (learner)":P[x.from].name+" ("+P[x.from].role+")"}: ${x.text}`).join("\n");
+}
+async function coach(m){
+  const ch=chOf(m.id), mi=MISSIONS.findIndex(x=>x.ch===ch);
+  const fallback=()=>{
+    const ms=MISSIONS[mi];
+    if(ms){const sug=ms.sugs[1]; m.coach={state:"done",example:true,verdict:"tweak",natural:sug.en,why:"AI 제안을 쓸 수 없어서, 이 상황의 예시 표현을 보여드려요.",phrase:{en:ms.phrases[0][0],ko:ms.phrases[0][1]}}}
+    else m.coach=null;
+  };
+  if(aiOff||(IN_CLAUDE&&!SAMPLE)){fallback(); rerender(ch); return}
+  m.coach={state:"loading"}; rerender(ch);
+  const prompt=`You are a friendly English writing coach for a Korean product designer who is practicing workplace English in a Slack-style roleplay at a US tech startup.
+Situation (in Korean): ${mi>=0?MISSIONS[mi].brief:"자유 대화"}
+Channel: ${chLabel(ch)}
+Recent messages:
+${recentContext(ch,m)||"(none)"}
+
+The learner (Solbi) just sent: "${m.text}"
+
+Rewrite the learner's message the way a native English-speaking coworker would naturally write it in Slack, keeping the same meaning, intent and roughly the same length. If it is in Korean or mixed, write it fully in English. If it is already natural, keep it nearly unchanged.
+Reply with only JSON like:
+{"verdict":"natural"|"tweak"|"rewrite","natural":"<the rewritten message>","why_ko":"<one or two short sentences in Korean: what changed and why, or what was good>","phrase":{"en":"<one short reusable expression from your version>","ko":"<its Korean meaning>"}}`;
+  try{
+    const r=await askAI(prompt);
+    if(!r||typeof r.natural!=="string") throw {code:"invalid_json"};
+    m.coach={state:"done",verdict:r.verdict||"tweak",natural:r.natural,why:String(r.why_ko||""),phrase:r.phrase&&r.phrase.en?{en:String(r.phrase.en),ko:String(r.phrase.ko||"")}:null};
+  }catch(e){
+    if(["not_granted","sampling_disabled","not_declared","capability_disabled","capability_removed"].includes(e&&e.code)){aiOff=true; fallback()}
+    else m.coach={state:"error"};
+  }
+  rerender(ch);
+}
+async function askAI(prompt){
+  if(IN_CLAUDE) return SAMPLE.json(prompt,{modelTier:"quick"});
+  let r;
+  try{ r=await fetch("/api/coach",{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify({prompt})}) }
+  catch(e){ throw {code:"upstream_error"} }
+  if(r.status===404||r.status===503) throw {code:"not_granted"};
+  if(!r.ok) throw {code:"upstream_error"};
+  return r.json();
+}
+function rerender(ch){ if(ch===S.cur&&S.view==="chat") renderMsgs(false) }
+
+/* emoji picker */
+const picker=$("picker"); let pickFor=null;
+function showPicker(btn,m){
+  pickFor=m;
+  picker.innerHTML=EMOJI.map(e=>`<button data-e="${e}" aria-label="${e} 반응">${e}</button>`).join("");
+  picker.hidden=false;
+  const r=btn.getBoundingClientRect(), w=picker.offsetWidth, h=picker.offsetHeight;
+  let left=Math.min(Math.max(8,r.left),innerWidth-w-8), top=r.top-h-8; if(top<8) top=r.bottom+8;
+  picker.style.left=left+"px"; picker.style.top=top+"px";
+}
+function hidePicker(){picker.hidden=true;pickFor=null}
+picker.addEventListener("click",e=>{
+  const b=e.target.closest("[data-e]"); if(!b||!pickFor) return;
+  const m=pickFor, r=m.reacts.find(x=>x.e===b.dataset.e);
+  if(!(r&&r.mine)) toggleReact(m,b.dataset.e);
+  hidePicker(); renderMsgs(false);
+});
+document.addEventListener("click",e=>{if(!picker.hidden&&!e.target.closest("#picker")&&!e.target.closest('[data-act="picker"]')) hidePicker()});
+$("msgs").addEventListener("scroll",hidePicker);
+
+/* vocab view */
+function renderVocab(){
+  if(S.view!=="vocab") return;
+  setChrome();
+  $("quizBtn").setAttribute("aria-pressed",S.quiz);
+  $("chTopic").textContent=S.vtab==="mine"?`대화에서 저장한 표현 ${S.vocab.length}개`:`업무 채팅 약어 ${Object.keys(ABBR).length}개`;
+  const tabs=`<div class="tabs" role="tablist"><button role="tab" data-v="tab-mine" aria-selected="${S.vtab==="mine"}">내 단어장 ${S.vocab.length}</button><button role="tab" data-v="tab-dict" aria-selected="${S.vtab==="dict"}">업무 약어 사전</button></div>`;
+  let body;
+  if(S.vtab==="dict"){
+    const keys=Object.keys(ABBR).sort((a,b)=>(S.seenAbbr.has(b)-S.seenAbbr.has(a))||a.localeCompare(b));
+    body=`<div class="dict">${keys.map(k=>`<div class="d"><b>${esc(k)}</b><div class="full">${esc(ABBR[k][0])}</div><span>${esc(ABBR[k][1])}</span>${S.seenAbbr.has(k)?`<span class="seen">대화에서 봤어요</span>`:""}</div>`).join("")}</div>`;
+  } else body=S.vocab.length?`<div class="vv-list">${S.vocab.map(v=>`
+    <article class="vcard" data-vid="${v.vid}">
+      <div class="en">${esc(v.en)}</div>
+      <div class="mean${S.quiz&&!v.peek?" veiled":""}" data-v="peek">${esc(v.ko)}</div>
+      <div class="ex">${esc(v.ex)}</div>
+      <div class="src">${v.from==="me"?"원어민 제안":esc(P[v.from].name)} · ${esc(chLabel(v.ch))}</div>
+      <div class="acts"><button data-v="src">원문 보기</button><button class="del" data-v="del">삭제</button></div>
+    </article>`).join("")}</div>`
+    :`<div class="vv-empty">아직 저장한 표현이 없어요.<br>대화 속 <b>점선 밑줄</b> 표현이나 약어를 누르거나, 메시지의 <b>저장</b>을 누르면 여기에 모여요.<br><button data-v="back">#general로 가기</button></div>`;
+  $("vocabView").innerHTML=tabs+body;
+}
+$("vocabView").addEventListener("click",e=>{
+  const b=e.target.closest("[data-v]"); if(!b) return;
+  const a=b.dataset.v;
+  if(a==="back"){go("general");return}
+  if(a==="tab-mine"||a==="tab-dict"){S.vtab=a.slice(4); renderVocab(); return}
+  const v=S.vocab.find(x=>x.vid===b.closest(".vcard").dataset.vid);
+  if(a==="peek") v.peek=!v.peek;
+  else if(a==="del"){S.vocab.splice(S.vocab.indexOf(v),1); renderPanel(); renderNav()}
+  else if(a==="src"){go(v.ch); const row=document.querySelector(`.msg[data-id="${v.msg}"]`); if(row){row.scrollIntoView({block:"center"}); row.classList.add("active")} return}
+  renderVocab();
+});
+$("quizBtn").addEventListener("click",()=>{S.quiz=!S.quiz; S.vocab.forEach(v=>v.peek=false); renderVocab()});
+
+/* typing */
+const typing={};
+function renderTyping(){
+  const who=typing[S.cur];
+  $("typing").innerHTML=who?`<span class="dots"><i></i><i></i><i></i></span>${esc(P[who].name.split(" ")[0])}님이 입력 중이에요`:"";
+}
+async function say(ch,from,msg,delay=1600){
+  typing[ch]=from; renderTyping();
+  await wait(delay);
+  typing[ch]=null; renderTyping();
+  tick(1); return add(ch,{from,...msg});
+}
+
+/* flow */
+async function afterSend(ch,mine){
+  const m=MISSIONS[S.stage];
+  if(!m||m.ch!==ch){
+    if(!S.noted){S.noted=true; await wait(700); toast("지금은 미션 채널에서만 답장이 와요. AI 동료가 연결되면 어디서든 대화할 수 있어요.")}
+    return;
+  }
+  S.busy=true; S.stage++; renderPanel(); renderTip();
+  if(S.stage===1){
+    lateReact(mine,"👋",1200); lateReact(mine,"👋",2000); lateReact(mine,"🎉",2600); lateReact(mine,"👋",3400);
+    await wait(900);
+    await say("general","tom",{text:"Welcome aboard! 🙌 Ping me anytime if you need a hand finding your way around. Also lmk if you want a quick 1:1 to go over our design system.",
+      ko:"합류 환영해요! 🙌 적응하다 도움 필요하면 언제든 메시지 주세요. 디자인 시스템 같이 훑어볼 짧은 1:1 원하면 알려줘요.",key:{en:"Ping me",ko:"(메신저로) 연락 주세요"},late:[["❤️",1300]]},1800);
+    await say("general","maya",{text:"Great to have you here! I just shared your onboarding mockups in #design. Take a look when you get a chance.",
+      ko:"함께하게 돼서 좋아요! 방금 #design에 온보딩 시안을 공유했어요. 시간 될 때 봐주세요.",key:{en:"when you get a chance",ko:"시간 날 때, 여유 있을 때"}},1800);
+    tick(3);
+    add("design",{from:"maya",text:"Hey @Solbi, I went through the onboarding mockups. Overall this is looking great! Two small things: the main CTA feels a bit buried below the fold, and could we try a lighter weight for the body copy?",
+      ko:"솔비님, 온보딩 시안 봤어요. 전체적으로 아주 좋아요! 작은 거 두 가지만요. 메인 CTA가 스크롤해야 보이는 곳에 묻혀 있는 느낌이고, 본문 글씨 두께를 좀 더 가볍게 해보면 어떨까요?",
+      key:{en:"below the fold",ko:"첫 화면 아래 (스크롤해야 보이는 영역)"},attach:true});
+    tick(2);
+    add("design",{from:"priya",text:"+1 to Maya. Also just flagging that the carousel animation might be tricky to ship this sprint. Would a static version work for v1?",
+      ko:"Maya 말에 동의해요. 그리고 혹시 몰라 짚어두면, 캐러셀 애니메이션은 이번 스프린트에 넣기 어려울 수 있어요. v1은 정적인 버전으로 가도 될까요?",
+      key:{en:"just flagging",ko:"혹시 몰라 짚어둘게요"},late:[["👀",4000]]});
+    toast("#design에 새 피드백이 달렸어요");
+  } else if(S.stage===2){
+    lateReact(mine,"🙌",1100); lateReact(mine,"✅",2200);
+    await wait(900);
+    await say("design","maya",{text:"Love it, thanks for being so open to feedback! 👍",
+      ko:"좋아요, 피드백을 열린 마음으로 받아줘서 고마워요! 👍",key:{en:"open to feedback",ko:"피드백을 잘 받아들이는"},late:[["👍",1200]]},1700);
+    await say("design","priya",{text:"Awesome, that'll save us a ton of time. Thank you!",
+      ko:"좋아요, 덕분에 시간이 엄청 절약되겠어요. 고마워요!",key:{en:"save a ton of time",ko:"시간을 엄청 아끼다"}},1500);
+    tick(6);
+    add("dm-jake",{from:"jake",day:"오늘",text:"Hey Solbi, quick check: are we still on track to hand off the final screens by EOD tomorrow? Want to give eng a solid ETA.",
+      ko:"솔비님, 잠깐 확인할게요. 최종 화면은 여전히 내일 업무 끝나기 전까지 넘겨줄 수 있는 거죠? 개발팀에 확실한 완료 예정일을 알려주고 싶어서요.",key:{en:"on track",ko:"계획대로 진행 중인"}});
+    toast("Jake Morrison님이 DM을 보냈어요");
+  } else if(S.stage===3){
+    await wait(900);
+    await say("dm-jake","jake",{text:"No worries, Thursday works. Appreciate the heads-up! 🙏 I'll update the ETA in the tracker.",
+      ko:"괜찮아요, 목요일 좋아요. 미리 말해줘서 고마워요! 🙏 트래커에 완료 예정일 업데이트해둘게요.",key:{en:"Appreciate the heads-up",ko:"미리 알려줘서 고마워요"}},2000);
+    lateReact(mine,"👍",900);
+    renderPanel(); renderTip(); toast("오늘의 미션을 모두 끝냈어요");
+  }
+  S.busy=false;
+}
+
+/* composer */
+const input=$("input"), sendBtn=$("send");
+function autosize(){input.style.height="auto";input.style.height=Math.min(input.scrollHeight,160)+"px";sendBtn.disabled=!input.value.trim()}
+input.addEventListener("input",()=>{autosize();renderTip()});
+input.addEventListener("keydown",e=>{
+  if(e.key==="Escape"){S.tipOff=true;renderTip();return}
+  if(e.key==="Enter"&&!e.shiftKey&&!e.isComposing){e.preventDefault();send()}
+});
+input.addEventListener("focus",()=>{S.tipOff=false;S.focus=true;renderTip()});
+input.addEventListener("blur",()=>{S.focus=false;setTimeout(renderTip,150)});
+sendBtn.addEventListener("click",()=>send());
+function send(viaQuiz){
+  const t=input.value.trim(); if(!t||S.busy) return;
+  const ms=MISSIONS[S.stage]; if(viaQuiz&&ms&&ms.ch===S.cur) S.help[S.stage]=true;
+  tick(1); const mine=add(S.cur,{from:"me",text:t});
+  S.mine.push({ch:S.cur,text:t,help:!!viaQuiz});
+  input.value=""; autosize(); closePop(); closeQuiz(); renderTip();
+  if(!viaQuiz) coach(mine);
+  afterSend(S.cur,mine);
+}
+
+/* recommendation tooltip */
+let tipItems=[];
+function renderTip(){
+  const tip=$("tip");
+  const show=S.view==="chat"&&(S.focus||document.activeElement===input)&&!S.tipOff&&$("pop").hidden&&$("quiz").hidden;
+  if(!show){tip.hidden=true;return}
+  const t=input.value;
+  let title, items=[];
+  for(const sw of SWAPS){const mm=t.match(sw.re); if(mm){title=`“${mm[0]}” 대신 이렇게도 써보세요`; items=sw.alts.map(([en,ko])=>({en,ko,match:mm})); break}}
+  if(!items.length){
+    const m=MISSIONS[S.stage];
+    const list=m&&m.ch===S.cur?m.phrases:GENERIC;
+    title=m&&m.ch===S.cur?"이 상황에서 자주 쓰는 표현":"업무 채팅에서 자주 쓰는 표현";
+    items=list.map(([en,ko])=>({en,ko}));
+  }
+  tipItems=items;
+  $("tipTitle").textContent=title;
+  $("chips").innerHTML=items.map((x,i)=>`<button class="chip" data-i="${i}"><b>${esc(x.en)}</b><span>${esc(x.ko)}</span></button>`).join("");
+  tip.hidden=false;
+}
+$("chips").addEventListener("mousedown",e=>e.preventDefault());
+$("chips").addEventListener("click",e=>{
+  const b=e.target.closest("[data-i]"); if(!b) return;
+  const it=tipItems[+b.dataset.i], hasSlot=it.en.includes("~");
+  const phrase=it.en.replace(/\s*~\s*/g," ").trim();
+  if(it.match){
+    const i=it.match.index;
+    input.value=input.value.slice(0,i)+phrase+input.value.slice(i+it.match[0].length);
+    const c=i+phrase.length; input.setSelectionRange(c,c);
+  } else {
+    const pos=input.selectionStart??input.value.length, before=input.value.slice(0,pos), after=input.value.slice(pos);
+    const sep=before&&!/\s$/.test(before)?" ":"";
+    const ins=sep+phrase+(hasSlot?" ":"");
+    input.value=before+ins+after; const c=pos+ins.length; input.setSelectionRange(c,c);
+  }
+  input.focus(); autosize(); renderTip();
+});
+$("tipClose").addEventListener("mousedown",e=>e.preventDefault());
+$("tipClose").addEventListener("click",()=>{S.tipOff=true;renderTip()});
+
+/* help: fill-in-the-blank quiz */
+let Q=null;
+const quizEl=$("quiz"), quizBtn=$("quizBtn2");
+function openQuiz(variant){
+  closePop();
+  const mi=S.stage, ms=MISSIONS[mi];
+  if(!ms||ms.ch!==S.cur){
+    Q=null;
+    quizEl.innerHTML=`<div class="q-head"><b>도움 요청</b></div><p class="q-ko">${ms?`지금 미션은 <b>${esc(ms.title)}</b>예요. ${esc(chLabel(ms.ch))}에서 도움을 요청해보세요.`:"오늘 미션을 모두 끝냈어요. 자유롭게 대화해보세요."}</p><div class="q-acts">${ms?`<button class="pri" data-q="goto">${esc(chLabel(ms.ch))}로 이동</button>`:""}<button class="x" data-q="close">닫기</button></div>`;
+  } else {
+    const cz=ms.cloze[variant], parts=cz.s.split(/\[(.+?)\]/);
+    const slots=[]; parts.forEach((p,i)=>{if(i%2) slots.push({ans:p,val:null})});
+    Q={mi,variant,parts,ko:cz.ko,slots,bank:shuffle([...slots.map(s=>s.ans),...cz.d]).map(w=>({w,used:false})),checked:false,solved:false};
+  }
+  quizEl.hidden=false; quizBtn.setAttribute("aria-expanded","true"); $("tip").hidden=true;
+  if(Q) renderQuiz();
+}
+function renderQuiz(){
+  const next=Q.slots.findIndex(s=>s.val===null);
+  let si=0;
+  const sent=Q.parts.map((p,i)=>{
+    if(!(i%2)) return esc(p);
+    const k=si++, s=Q.slots[k];
+    const st=s.val===null?"empty"+(k===next?" next":""):Q.checked?(s.ok?"ok":"no"):"";
+    return `<button class="slot ${st}" data-slot="${k}" aria-label="빈칸 ${k+1}">${s.val?esc(s.val):"＿＿"}</button>`;
+  }).join("");
+  const full=Q.slots.every(s=>s.val!==null);
+  quizEl.innerHTML=`
+    <div class="q-head"><b>빈칸을 채워 답장을 완성해보세요</b>
+      <div class="seg"><button data-qv="0" aria-pressed="${Q.variant===0}">캐주얼</button><button data-qv="1" aria-pressed="${Q.variant===1}">정중하게</button></div></div>
+    <p class="q-ko">${esc(Q.ko)}</p>
+    <div class="q-sent">${sent}</div>
+    ${Q.solved?"":`<div class="bank">${Q.bank.map((b,i)=>`<button data-b="${i}" ${b.used?"disabled":""}>${esc(b.w)}</button>`).join("")}</div>`}
+    <div class="q-acts">
+      ${Q.solved?`<button class="pri" data-q="send">바로 보내기</button><button class="sec" data-q="insert">입력창에 넣고 고치기</button>`
+        :`<button class="pri" data-q="check" ${full?"":"disabled"}>정답 확인</button>`}
+      <button class="x" data-q="close">닫기</button>
+    </div>
+    <p class="q-msg">${Q.solved?"완벽해요! 이대로 보내거나, 입력창에 넣고 내 말투로 고쳐보세요.":Q.checked?"빨간 칸을 눌러 비우고 다시 골라보세요.":"아래 단어를 눌러 빈칸을 순서대로 채워요. 채운 칸을 누르면 다시 비워져요."}</p>`;
+}
+function quizSentence(){let si=0;return Q.parts.map((p,i)=>i%2?Q.slots[si++].ans:p).join("")}
+quizEl.addEventListener("click",e=>{
+  const q=e.target.closest("[data-q]")?.dataset.q;
+  if(q==="close"){closeQuiz();return}
+  if(q==="goto"){const ms=MISSIONS[S.stage]; go(ms.ch); openQuiz(0); return}
+  if(!Q) return;
+  const v=e.target.closest("[data-qv]"); if(v){openQuiz(+v.dataset.qv);return}
+  const b=e.target.closest("[data-b]");
+  if(b){const it=Q.bank[+b.dataset.b], s=Q.slots.find(x=>x.val===null); if(s&&!it.used){s.val=it.w;s.bi=+b.dataset.b;it.used=true;Q.checked=false}}
+  const sl=e.target.closest("[data-slot]");
+  if(sl&&!Q.solved){const s=Q.slots[+sl.dataset.slot]; if(s.val!==null){Q.bank[s.bi].used=false;s.val=null;Q.checked=false}}
+  if(q==="check"){Q.checked=true;Q.slots.forEach(s=>s.ok=s.val===s.ans);Q.solved=Q.slots.every(s=>s.ok)}
+  if(q==="send"){input.value=quizSentence();autosize();send(true);return}
+  if(q==="insert"){const ms=MISSIONS[S.stage]; if(ms) S.help[S.stage]=true; input.value=quizSentence();autosize();closeQuiz();input.focus();return}
+  renderQuiz();
+});
+function closeQuiz(){quizEl.hidden=true;quizBtn.setAttribute("aria-expanded","false")}
+quizBtn.addEventListener("click",()=>{ if(!quizEl.hidden){closeQuiz();return} openQuiz(0) });
+
+/* Korean → English popover */
+const pop=$("pop"), helpBtn=$("helpBtn");
+function closePop(){pop.hidden=true;helpBtn.setAttribute("aria-expanded","false")}
+helpBtn.addEventListener("click",()=>{
+  closeQuiz();
+  pop.hidden=!pop.hidden; helpBtn.setAttribute("aria-expanded",String(!pop.hidden));
+  $("sugs").innerHTML="";
+  $("tip").hidden=true;
+  if(!pop.hidden) $("koInput").focus();
+});
+function showSugs(){
+  const m=MISSIONS[Math.min(S.stage,MISSIONS.length-1)];
+  const list=(m.ch===S.cur||S.stage>=MISSIONS.length)?m.sugs:null;
+  $("sugs").innerHTML=list?list.map((s,i)=>`<div class="sug"><span class="tone">${s.tone==="CASUAL"?"캐주얼":"정중하게"}</span><div class="en">${esc(s.en)}</div><button data-i="${i}">입력창에 넣기</button></div>`).join("")
+    :`<div class="empty">이 채널에는 예시 표현이 없어요. 지금 미션은 <b>${esc(m.title)}</b>예요.</div>`;
+  $("sugs").dataset.stage=Math.min(S.stage,MISSIONS.length-1);
+}
+$("koGo").addEventListener("click",showSugs);
+$("koInput").addEventListener("keydown",e=>{if(e.key==="Enter"&&!e.isComposing){e.preventDefault();showSugs()}});
+$("sugs").addEventListener("click",e=>{
+  const b=e.target.closest("button[data-i]"); if(!b) return;
+  const m=MISSIONS[+$("sugs").dataset.stage];
+  input.value=m.sugs[+b.dataset.i].en; autosize(); closePop(); input.focus();
+});
+
+/* panel */
+function renderPanel(){
+  const done=S.stage>=MISSIONS.length;
+  const m=MISSIONS[Math.min(S.stage,MISSIONS.length-1)];
+  const solo=MISSIONS.filter((_,i)=>i<S.stage&&!S.help[i]).length;
+  $("panel").innerHTML=`
+    ${done?`<section class="review">
+        <div class="p-eyebrow">Day 1 complete</div>
+        <h3>오늘 보낸 메시지</h3>
+        <ol>${S.mine.map(x=>`<li>${esc(x.text)}</li>`).join("")}</ol>
+        <p class="stat">도움 없이 답한 미션 <b>${solo}/${MISSIONS.length}</b></p>
+        <p>다음 단계에서 여기에 전체 대화 리뷰와 톤 피드백이 붙어요.</p>
+        <button class="restart" id="restart">처음부터 다시 하기</button>
+      </section>`:`<section class="brief">
+        <div class="p-eyebrow">Mission ${S.stage+1} / ${MISSIONS.length}</div>
+        <h2>${esc(m.title)}</h2>
+        <p>${esc(m.brief)}</p>
+        <button class="where" data-go="${m.ch}">${esc(chLabel(m.ch))}로 이동</button>
+      </section>`}
+    <section>
+      <div class="h-sec">오늘의 미션 <span>${Math.min(S.stage,MISSIONS.length)}/${MISSIONS.length}</span></div>
+      <ul class="checks">${MISSIONS.map((x,i)=>`<li class="${i<S.stage?"done":i===S.stage?"cur":""}"><span class="ck">${i<S.stage?"✓":""}</span><span class="lbl">${esc(x.title)}</span>${i<S.stage&&S.help[i]?`<span class="used">도움 사용</span>`:""}</li>`).join("")}</ul>
+    </section>
+    <section>
+      <div class="h-sec">내 단어장 <span>${S.vocab.length}</span></div>
+      <div class="vocab">${S.vocab.length?S.vocab.slice(0,4).map(v=>`<div class="voc" data-vocab="1"><b>${esc(v.en)}</b><span>${esc(v.ko)}</span></div>`).join("")+(S.vocab.length>4?`<button class="where" data-vocab="1">전체 ${S.vocab.length}개 보기</button>`:"")
+        :`<div class="empty">대화 속 <b>점선 밑줄</b> 표현이나 약어를 누르면 여기에 모여요.</div>`}</div>
+    </section>`;
+  renderVocab();
+}
+$("panel").addEventListener("click",e=>{
+  const g=e.target.closest("[data-go]"); if(g){go(g.dataset.go); app.classList.remove("show-panel"); return}
+  if(e.target.closest("[data-vocab]")){S.vtab="mine";openVocab(); app.classList.remove("show-panel"); return}
+  if(e.target.closest("#restart")) location.reload();
+});
+
+/* narrow layout */
+const app=$("app");
+$("openSide").addEventListener("click",()=>app.classList.add("show-side"));
+$("openPanel").addEventListener("click",()=>app.classList.add("show-panel"));
+$("scrim").addEventListener("click",()=>app.classList.remove("show-side","show-panel"));
+
+let tt;
+function toast(t){const el=$("toast");el.textContent=t;el.hidden=false;clearTimeout(tt);tt=setTimeout(()=>el.hidden=true,2600)}
+
+function seed(){
+  add("general",{from:"jake",time:"4:48 PM",day:"어제",text:"Heads-up: this week's all-hands is moved to Thursday 10am. FYI, I'm OOO on Friday.",
+    ko:"미리 알려드려요. 이번 주 전체 회의는 목요일 오전 10시로 옮겨졌어요. 참고로 저는 금요일에 부재중이에요.",key:{en:"Heads-up",ko:"미리 알려드려요 / 참고하세요"},
+    reacts:[{e:"👀",n:5},{e:"✅",n:3}]},{silent:true});
+  add("general",{from:"maya",day:"오늘",text:"Everyone, please welcome @Solbi, our new product designer! 🎉 Solbi, feel free to introduce yourself whenever you're ready.",
+    ko:"모두 새로 온 프로덕트 디자이너 솔비님을 환영해주세요! 🎉 솔비님, 준비되면 편하게 자기소개 해주세요.",key:{en:"feel free to ~",ko:"편하게 ~해도 돼요"},
+    late:[["🎉",900],["🎉",1500],["👋",2100],["🎉",2700],["👋",3300],["❤️",4200]]},{silent:true});
+  add("product",{from:"jake",time:"5:10 PM",day:"어제",text:"Launch checklist is updated in the doc. Please review your items by EOW 🙏",
+    ko:"출시 체크리스트를 문서에 업데이트했어요. 이번 주 안에 각자 맡은 항목 확인 부탁해요 🙏",key:{en:"review your items",ko:"맡은 항목을 확인하다"}},{silent:true});
+  add("product",{from:"priya",time:"5:24 PM",text:"Done on my end ✅ The PR for the new nav is up, PTAL when you have a sec. QA starts Monday.",
+    ko:"제 쪽은 끝났어요 ✅ 새 내비게이션 PR 올렸어요, 잠깐 시간 될 때 봐주세요. QA는 월요일에 시작해요.",key:{en:"on my end",ko:"제 쪽에서는"},reacts:[{e:"🙌",n:2}]},{silent:true});
+  S.mention.general=true;
+}
+seed(); go("general"); renderPanel();
+
+</script>
+
+</body>
+</html>
